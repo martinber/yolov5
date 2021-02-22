@@ -24,7 +24,7 @@ def main(args):
                     else:
                         print("Seen an object of class", cls)
 
-                print(format_line(filename, detections))
+                out_file.write(format_line(filename, detections))
 
 
 def format_line(img_path, detections):
@@ -32,7 +32,9 @@ def format_line(img_path, detections):
     Format a line for the output idl file, from a list of detections and the
     name of the txt file.
 
-    Each detection is a tuple of (x, y, w, h, score)
+    Each detection is a tuple of (x, y, w, h, score).
+
+    Adds a endline at the end
     """
 
     line = f'"{img_path}";'
@@ -45,7 +47,7 @@ def format_line(img_path, detections):
     if detections:
         line += ";"
 
-    return line
+    return line + "\n"
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
