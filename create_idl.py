@@ -2,6 +2,10 @@ import argparse
 from pathlib import Path
 import PIL.Image
 import math
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+import cv2
+
 """
 "/home/mbernardi/extra/async/ipcv/pdbr/labs/2/datasets/busStation/in000716.jpg"; (76, 61, 37, 117):-0.2346, (186, 11, 38, 118):-0.8941, (60, 21, 58, 161):-1.3409;
 """
@@ -38,7 +42,7 @@ def main(args):
 def convert_to_BBox(size, box):
     '''
     Info. of Yolo format: https://www.kaggle.com/pabloberhauser/creating-label-files-for-use-in-yolov4
-    '''
+    
     dw = 1. / size[0]
     dh = 1. / size[1]
     x = float(box[0])
@@ -54,6 +58,30 @@ def convert_to_BBox(size, box):
     BB_3 = int(math.floor((h + y) / 2.0))
     BB_2 = int(math.floor(BB_3 - h))
     return [BB_0, BB_2, BB_1, BB_3]
+    '''
+    # Taken from https://github.com/pjreddie/darknet/blob/810d7f797bdb2f021dbe65d2524c2ff6b8ab5c8b/src/image.c#L283-L291
+    # via https://stackoverflow.com/questions/44544471/how-to-get-the-coordinates-of-the-bounding-box-in-yolo-object-detection#comment102178409_44592380
+    dw = size[0]
+    dh = size[1]
+    x = float(box[0])
+    y = float(box[1])
+    w = float(box[2])
+    h = float(box[3])
+    l = int((x - w / 2) * dw) #Most Left point
+    r = int((x + w / 2) * dw) #Most right point
+    t = int((y - h / 2) * dh) #Most top point
+    b = int((y + h / 2) * dh) #Most bottom point
+    
+    if l < 0:
+        l = 0
+    if r > dw - 1:
+        r = dw - 1
+    if t < 0:
+        t = 0
+    if b > dh - 1:
+        b = dh - 1
+
+    return l,t,r-l,b-t
 
 def format_line(img_path, detections):
     """
@@ -72,6 +100,21 @@ def format_line(img_path, detections):
     for i, detection_tuple in enumerate(detections):
         x, y, w, h, score = detection_tuple
         x, y, w, h = convert_to_BBox((img_w,img_h),(x,y,w,h))
+        '''
+        # Create figure and axes
+        fig, ax = plt.subplots()
+
+        # Display the image
+        ax.imshow(image)
+
+        # Create a Rectangle patch
+        rect = patches.Rectangle((x, y), w, h, linewidth=1, edgecolor='r', facecolor='none')
+        print(img_path)
+        print(x,y,w,h)
+        # Add the patch to the Axes
+        ax.add_patch(rect)
+        plt.show()
+        '''
         if i > 0:
             line += ","
         line += f' ({x}, {y}, {w}, {h}):{score}'
