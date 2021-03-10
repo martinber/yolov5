@@ -1,3 +1,18 @@
+# YOLOv5 PDBR fork
+
+Fork of YOLOv5 to compete in a challenge for a specific dataset. Only has
+modifications on the output text file formats and also filters some hardcoded
+false positives.
+
+Example of how to run:
+
+```
+python3 ./detect.py --source ~/extra/async/ipcv/pdbr/labs/2/datasets/fall/ --save-txt --save-conf --classes 0 --weights yolov5x.pt
+python3 ./create_idl.py ./runs/detect/exp/labels/ ~/extra/async/ipcv/pdbr/labs/2/datasets/fall/ ./runs/full_filt_idl/fall.idl
+```
+
+# Original README
+
 <a href="https://apps.apple.com/app/id1452689527" target="_blank">
 <img src="https://user-images.githubusercontent.com/26833433/98699617-a1595a00-2377-11eb-8145-fc674eb9b1a7.jpg" width="1000"></a>
 &nbsp

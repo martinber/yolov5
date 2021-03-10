@@ -19,6 +19,9 @@ def main(args):
     ds_folder = Path(args.ds_folder)
     out_filename = Path(args.out_filename)
 
+    print("Saving in", out_filename)
+    ignores = {"Head": 0, "Extinguisher": 0}
+
     with open(out_filename, "w") as out_file:
         for filename,imgname in zip(sorted(in_folder.iterdir()),sorted(ds_folder.glob('*.jpg'))):
             if filename.suffix != ".txt":
@@ -37,7 +40,39 @@ def main(args):
                     else:
                         print("Seen an object of class", cls)
 
-                out_file.write(format_line(imgname, detections))
+                line, ignores = format_line(imgname, detections, ignores)
+                out_file.write(line)
+
+    print(ignores)
+
+def ignore_detection(x, y, w, h):
+    """
+    Returns true if the detection should be ignored
+
+    Example of fire extinguisher: (671, 352, 20, 45):0.561148,
+    """
+    # Extinguisher coordinates
+    ext_x = 671
+    ext_y = 352
+    ext_w = 20
+    ext_h = 45
+
+    # Threshold of similar coordinates to consider
+    ext_th = 5 # allow +/- 5 pixels
+
+    if abs(x - ext_x) < ext_th \
+            and abs(y - ext_y) < ext_th \
+            and abs(w - ext_w) < ext_th \
+            and abs(h - ext_h) < ext_th:
+        return True, "Extinguisher"
+
+    # Ignore squares (heads)
+    ratio = w / h
+
+    # if ratio > 0.9 and ratio < 1.1 and w < 30:
+        # return True, "Head"
+
+    return False, None
 
 def convert_to_BBox(size, box):
     '''
@@ -83,7 +118,7 @@ def convert_to_BBox(size, box):
 
     return l,t,r-l,b-t
 
-def format_line(img_path, detections):
+def format_line(img_path, detections, ignores):
     """
     Format a line for the output idl file, from a list of detections and the
     name of the txt file.
@@ -97,9 +132,15 @@ def format_line(img_path, detections):
     # Load image size to extract Bounding Box information
     image = PIL.Image.open(img_path)
     img_w, img_h = image.size
+    detected_person = False
     for i, detection_tuple in enumerate(detections):
         x, y, w, h, score = detection_tuple
         x, y, w, h = convert_to_BBox((img_w,img_h),(x,y,w,h))
+
+        ignore, reason = ignore_detection(x, y, w, h)
+        if ignore:
+            ignores[reason] += 1
+            continue
         '''
         # Create figure and axes
         fig, ax = plt.subplots()
@@ -118,11 +159,12 @@ def format_line(img_path, detections):
         if i > 0:
             line += ","
         line += f' ({x}, {y}, {w}, {h}):{score}'
+        detected_person = True
 
-    if detections:
+    if detected_person:
         line += ";"
 
-    return line + "\n"
+    return line + "\n", ignores
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
